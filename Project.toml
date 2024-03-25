@@ -1,0 +1,9 @@
+name = "RG_running"
+uuid = "65f14339-5879-41a7-ba17-e8e60657359f"
+authors = ["Antonino D'Anna <anda982008@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+ADerrors = "5e92007d-7bf1-471c-8ceb-4591b8b567a9"
+BDIO = "375f315e-f2c4-11e9-2ef9-134f02f79e27"
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
