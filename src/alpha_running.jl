@@ -143,19 +143,19 @@ function g_from_RG_eq(mu, bcoef::Vector{uwreal};Lambda = MSbar.Lambda,nl=5,g0=1.
 end
 
 @doc raw"""
-  alpha(mu,bcoef; nl=5, g0=1.0,c=0.5, verbose=false) 
+    alpha(mu,bcoef; nl=5, g0=1.0,c=0.5, verbose=false) 
   
-  alpha(mu::AbstractArray,bcoef; nl=5,g0=1.0,c=0.5,verbose=false)
+    alpha(mu::AbstractArray,bcoef; nl=5,g0=1.0,c=0.5,verbose=false)
 
 It returns `\alpha_s(\mu)` using the RG equation.
 Assume `\mu` is in MeV.
 See `g_from_RG_eq` for documentation.
 
-```@example 
-bcoef = beta_function_coeff(3,3,nl=5)
-alpha_5l(10000,bcoef,nl=5)
-alpha_4l(10000,bcoef,nl=4)
-```
+    ```@example 
+    bcoef = beta_function_coeff(3,3,nl=5)
+    alpha_5l(10000,bcoef,nl=5)
+    alpha_4l(10000,bcoef,nl=4)
+    ```
 """
 alpha(mu,bcoef;Lambda=MSbar.Lambda, nl=5, g0=1.0,c=0.5, verbose=false) = 
   g_from_RG_eq(mu,bcoef,Lambda =Lambda,nl=nl, g0=g0, c=c, verbose=verbose)^2/(4*pi)
@@ -163,3 +163,5 @@ alpha(mu,bcoef;Lambda=MSbar.Lambda, nl=5, g0=1.0,c=0.5, verbose=false) =
 function alpha(mu::AbstractArray,bcoef;Lambda=MSbar.Lambda, nl=5,g0=1.0,c=0.5,verbose=false)
   return [g_from_RG_eq(x,bcoef,Lambda =Lambda,nl=nl,g0=g0,c=c,verbose=verbose) for x in mu]
 end
+
+
