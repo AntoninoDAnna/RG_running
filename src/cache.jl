@@ -9,17 +9,14 @@
 __integral_phi__ = Dict{Float64,Dict{Float64,uwreal}}();
 
 @doc raw"""
-  reset_cache()
+  reset_cache(; key::Union{Nothing,Float64} = nothing)
 
   Reset the cached variable. 
 """
-function reset_cache(; key::Union{Nothing,Float64})
+function reset_cache(; key::Union{Nothing,Float64}=nothing)
   if isnothing(key)
-    global __integral_phi__ = nothing
-    global __integral_phi__ = Dict{Float64,Dict{Float64,uwreal}}();
+    empty!(__integral_phi__) 
   else
-    global __integral_phi__[key] = nothing
-    global __integral_phi__[key] = Dict{Float64,Dict{Float64,uwreal}}();
-
+    delete!(__integral_phi__,key)
   end
 end
