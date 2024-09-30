@@ -40,32 +40,32 @@ function phi(g,bcoef::Vector)
 end
 
 @doc raw"""
-  g\_from\_RG\_eq(mu, bcoef::Vector{Float64};Lambda = MSbar.Lambda, nl=5,g0=1.0, c=0.5,verbose=false)
+    g_from_RG_eq(mu, bcoef::Vector{Float64};Lambda = MSbar.Lambda, nl=5,g0=1.0, c=0.5,verbose=false)
 
-  g\_from\_RG\_eq(mu, bcoef::Vector{uwreal};Lambda = MSbar.Lambda, nl=5,g0=1.0, c=0.5,verbose=false)  
+    g_from_RG_eq(mu, bcoef::Vector{uwreal};Lambda = MSbar.Lambda, nl=5,g0=1.0, c=0.5,verbose=false)  
 
-  It computes `g_s(\mu)` using the RG equation.`\mu` is assumed to be in MeV `nl` is number of loops
-  at which one wants the beta function, `g0` is the intial guess for the
-  rooting routine (`root_error` from `ADerrors`), `c` shouldn't be changed.
-  
-  The function is buildt such that it checks whether your are passing the correct
-  number of beta coefficient. If more coefficient are given, it keeps only the first `nl`.
-  In this way you can store only one vector of beta coefficient and modify the approximation
-  now. 
-  `c` is an auxilary variable. If the rooting routine request `phi` computed at negative g
-  `g_from_RG_eq` catch the error and restart the rooting with initial guess `g0*c` and `c = 1.5*c`
-  In this case, if verbose=true, it prints a warning.
+It computes `g_s(\mu)` using the RG equation.`\mu` is assumed to be in MeV `nl` is number of loops
+at which one wants the beta function, `g0` is the intial guess for the
+rooting routine (`root_error` from `ADerrors`), `c` shouldn't be changed.
 
-  WARNING: At the moment `Lambda_MSBar = 341` without errors
+The function is buildt such that it checks whether your are passing the correct
+number of beta coefficient. If more coefficient are given, it keeps only the first `nl`.
+In this way you can store only one vector of beta coefficient and modify the approximation
+now. 
+`c` is an auxilary variable. If the rooting routine request `phi` computed at negative g
+`g_from_RG_eq` catch the error and restart the rooting with initial guess `g0*c` and `c = 1.5*c`
+In this case, if verbose=true, it prints a warning.
+
+WARNING: At the moment `Lambda_MSBar = 341` without errors
 """
 function g_from_RG_eq(mu, bcoef::Vector{Float64}; Lambda = MSbar.Lambda, nl=5,g0=1.0, c=0.5,verbose=false)  
   if nl < length(bcoef) #check that ensure that the beta function is at the  correct loop approx
     bcoef = bcoef[1:nl];
   end
   mu_over_lambda = mu/Lambda
+  gbar = 0.0;
   if mu_over_lambda isa uwreal
     aux_phi(g,p) = p[1] - phi(g,bcoef)
-    gbar = 0.0;
     try
       gbar =  root_error(aux_phi,g0,[mu_over_lambda])  
     catch e
@@ -79,7 +79,7 @@ function g_from_RG_eq(mu, bcoef::Vector{Float64}; Lambda = MSbar.Lambda, nl=5,g0
         end
         gbar = g_from_RG_eq(mu,bcoef,Lambda=Lambda,nl=nl,g0 = c*g0, c = 1.5*c)
       else
-        error(e.msg)
+        error(e)
       end
     end
   else
@@ -97,8 +97,11 @@ function g_from_RG_eq(mu, bcoef::Vector{Float64}; Lambda = MSbar.Lambda, nl=5,g0
           """
         end
         gbar = g_from_RG_eq(mu,bcoef,Lambda = Lambda,nl=nl,g0 = c*g0, c = 1.5*c)
+      elseif DomainError
+        throw(e)
       else
-        error(e.msg)
+        @error e
+        gbar = g_from_RG_eq(mu,bcoef,Lambda = Lambda,nl=nl,g0 = c*g0, c = 1.5*c)
       end
     end
   end
@@ -133,7 +136,7 @@ function g_from_RG_eq(mu, bcoef::Vector{uwreal};Lambda = MSbar.Lambda,nl=5,g0=1.
       end
       gbar = g_from_RG_eq(mu,bcoef,nl=nl,g0 = c*g0, c = 1.5*c)
     else
-      error(e.msg)  
+      error(e)  
     end
   end
   return gbar
