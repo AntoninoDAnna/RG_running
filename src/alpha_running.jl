@@ -77,7 +77,7 @@ function g_from_RG_eq(mu, bcoef::Vector{Float64}; Lambda = MSbar.Lambda, nl=5,g0
           and initial value changed to $(c*g0)
           """
         end
-        gbar = g_from_RG_eq(mu,bcoef,Lambda=Lambda,nl=nl,g0 = c*g0, c = 1.5*c)
+        gbar = g_from_RG_eq(mu,bcoef,Lambda=Lambda,nl=nl,g0 = c*g0, c = 0.5*c)
       else
         error(e)
       end
@@ -96,12 +96,12 @@ function g_from_RG_eq(mu, bcoef::Vector{Float64}; Lambda = MSbar.Lambda, nl=5,g0
           and initial value changed to $(c*g0)
           """
         end
-        gbar = g_from_RG_eq(mu,bcoef,Lambda = Lambda,nl=nl,g0 = c*g0, c = 1.5*c)
-      elseif DomainError
+        gbar = g_from_RG_eq(mu,bcoef,Lambda = Lambda,nl=nl,g0 = c*g0, c = 0.5*c)
+      elseif e isa DomainError
         throw(e)
       else
         @error e
-        gbar = g_from_RG_eq(mu,bcoef,Lambda = Lambda,nl=nl,g0 = c*g0, c = 1.5*c)
+        gbar = g_from_RG_eq(mu,bcoef,Lambda = Lambda,nl=nl,g0 = c*g0, c = 0.5*c)
       end
     end
   end
