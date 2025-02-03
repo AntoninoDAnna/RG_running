@@ -1,21 +1,17 @@
-@doc raw"""
-  phi(g,bcoef::Vector)
+@doc raw"""  
+    phi(g,bcoef::Vector)
 
-  it computes the function $(L"$\phi(y=g_s^2)$"). For numerical stability it was decided to 
-  compute it directly in terms of $(L"$y = g_s^2$"). For rapidity, the value of the integrals is
-  stored into a cache variable `__integral_phi__`. When `phi(g_s,bcoef)` is called, it first 
-  check if the integral was already computed. If so it retrieve the cached results and return `phi`,
-  otherwise it looks for the highest `g<g_s` for which the integral was computed, retrieve 
-  `cached_int[g]` and compute the integral from g to g_s. The sum of these is cached in 
-  `__integral_phi__`, such that each entry is the integral from `0` to the respective `g`.
+It computes the function \phi(y=g_s^2). For numerical stability it was decided to compute it directly in terms of y = g_s^2. 
+For rapidity, the results of the integrals are cached. When `phi(g_s^2,bcoef)` is called, it first check if the integral was already computed. 
+If so it retrieve the cached results and return `phi`, otherwise it looks for the highest `g^2<g_s^2` for which the integral was computed, retrieve 
+`cached_int[g^2]` and compute the integral from g^2 to g_s^2. The sum of these is cached such that each entry is the integral from `0` to the respective `g^2`.
   
-  WARNING: `phi` alway return a Float64, and `bcoef` must not be an uwreal. g must be positive
-  otherwise an `ArgumentError` is thrown
+WARNING: `phi` always return a Float64, and `bcoef` must not be an uwreal. g must be positive otherwise an `ArgumentError` is thrown
 """
 function phi(g,bcoef::Vector)
   key = bcoef[end]
   if !(key in keys(__integral_phi__))
-    __integral_phi__[key] = Dict{Float64,uwreal}()
+    __integral_phi__[key] = Dict{Float64,uwreal}(0.0=>0.0) ## make sure that there is at least one entry
   end
   if g<0
     throw(ArgumentError("Negative g in phi_y"))
@@ -30,38 +26,32 @@ function phi(g,bcoef::Vector)
   gsqr_used = [k for (k,_) in cached_int]
   if !(gsqr in gsqr_used)
     aux = findall(x->x<gsqr,gsqr_used)
-    lbound = isempty(aux) ? 0 : maximum(gsqr_used[aux])
-    cached_int[gsqr] = lbound == 0.0 ? int_error(integrand,0,gsqr,uwreal.(bcoef)) : (cached_int[lbound] + int_error(integrand,lbound,gsqr ,uwreal.(bcoef)))
+    lbound = maximum(gsqr_used[aux]) ## since gsqr is >0, worst case scenario is that lbound is 0.0
+    cached_int[gsqr] = (cached_int[lbound] + int_error(integrand,lbound,gsqr ,uwreal.(bcoef)))
   end
-  int_val = cached_int[gsqr]
   N = (bcoef[1] * gsqr)^(bcoef[2]/(2*bcoef[1]^2)) * exp(1 / (2*bcoef[1]*gsqr));
 
-  return N*exp(value(0.5*int_val))
+  return N*exp(value(0.5* cached_int[gsqr]))
 end
 
 @doc raw"""
-    g_from_RG_eq(mu, bcoef::Vector{Float64};Lambda = MSbar.Lambda, nl=5,g0=1.0, c=0.5,verbose=false)
+    g_from_RG_eq(mu, bcoef::Vector{Float64};Lambda = MSbar_float().Lambda, nl=5,g0=1.0, c=0.5,verbose=false)
 
-    g_from_RG_eq(mu, bcoef::Vector{uwreal};Lambda = MSbar.Lambda, nl=5,g0=1.0, c=0.5,verbose=false)  
+    g_from_RG_eq(mu, bcoef::Vector{uwreal};Lambda = MSbar_float().Lambda, nl=5,g0=1.0, c=0.5,verbose=false)  
 
-It computes `g_s(\mu)` using the RG equation.`\mu` is assumed to be in MeV `nl` is number of loops
+It computes `g_s(\mu)` using the RG equation.`\mu` is assumed to be in MeV, `nl` is number of loops
 at which one wants the beta function, `g0` is the intial guess for the
 rooting routine (`root_error` from `ADerrors`), `c` shouldn't be changed.
 
-The function is buildt such that it checks whether your are passing the correct
-number of beta coefficient. If more coefficient are given, it keeps only the first `nl`.
-In this way you can store only one vector of beta coefficient and modify the approximation
-now. 
+The function only uses the first nl termns in bcoef.
 `c` is an auxilary variable. If the rooting routine request `phi` computed at negative g
 `g_from_RG_eq` catch the error and restart the rooting with initial guess `g0*c` and `c = 1.5*c`
 In this case, if verbose=true, it prints a warning.
 
 WARNING: At the moment `Lambda_MSBar = 341` without errors
 """
-function g_from_RG_eq(mu, bcoef::Vector{Float64}; Lambda = MSbar.Lambda, nl=5,g0=1.0, c=0.5,verbose=false)  
-  if nl < length(bcoef) #check that ensure that the beta function is at the  correct loop approx
-    bcoef = bcoef[1:nl];
-  end
+function g_from_RG_eq(mu, bcoef::Vector{Float64}; Lambda = MSbar_float().Lambda, nl=5,g0=1.0, c=0.5,verbose=false)  
+  bcoef = bcoef[1:nl]
   mu_over_lambda = mu/Lambda
   gbar = 0.0;
   if mu_over_lambda isa uwreal

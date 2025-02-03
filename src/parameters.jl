@@ -50,14 +50,33 @@ struct HyperPar
   Lambda::Union{Float64,uwreal}
 end
 
-function msbar()
-  F2=uwreal([1.7505,0.0089], "F2")
-  F3_val=0.5226 
-  Lambda_val=341.0
-  Lambda_F3_cov= [[150.7862014579557, -0.01716315895017156] [ -0.01716315895017156, 0.00001830314004469306]]
-  vals = cobs([Lambda_val, F3_val], Lambda_F3_cov, "Lambda_MSBar & F3")
-  return HyperPar(F2, vals[2], vals[1])
+let 
+  _F2 = Ref{uwreal}();
+  global function F2_msbar()
+    if !isassigned(_F2)
+      _F2.x = uwreal([1.7505,0.0089], "F2 msbar")
+    end
+    return _F2.x 
+  end
+  
+  _Lambda, _F3 = Ref{uwreal}(),Ref{uwreal}();
+  global function Lambda_msbar()
+    if !isassigned(_Lambda)
+      _Lambda.x, _F3.x =cobs([341.0, 0.5226], [150.7862014579557 -0.01716315895017156; -0.01716315895017156 0.00001830314004469306], "Lambda and F3 MSBar")
+    end
+
+    return _Lambda.x
+  end
+
+  global function F3_msbar()
+    if !isassigned(_Lambda)
+      _Lambda.x, _F3.x =cobs([341.0, 0.5226], [150.7862014579557 -0.01716315895017156; -0.01716315895017156 0.00001830314004469306], "Lambda and F3 MSBar")
+    end
+
+    return _F3.x
+  end
 end
 
-MSbar = msbar()
-MSbar_Float = HyperPar(1.7505,0.5226,341.0)
+msbar_uwreal() = HyperPar(F2_msbar(),F3_msbar(),Lambda_msbar())
+
+MSbar_float() = HyperPar(1.7505,0.5226,341.0)

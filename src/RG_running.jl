@@ -7,7 +7,7 @@ include("parameters.jl")
 include("alpha_running.jl")
 
 export reset_cache
-export HyperPar,beta_function_coeff,MSbar,MSbar_Float
+export HyperPar,beta_function_coeff,msbar,MSbar_Float
 export alpha
 
 
