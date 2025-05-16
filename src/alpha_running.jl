@@ -51,6 +51,9 @@ In this case, if verbose=true, it prints a warning.
 WARNING: At the moment `Lambda_MSBar = 341` without errors
 """
 function g_from_RG_eq(mu, bcoef::Vector{Float64}; Lambda = MSbar_float().Lambda, nl=5,g0=1.0, c=0.5,verbose=false)  
+  if(mu<652)
+    error("[g_from_RG_eq]: Wait: this routine is not suitable for mu so low: are you mu is in MeV?")
+  end
   bcoef = bcoef[1:nl]
   mu_over_lambda = mu/Lambda
   gbar = 0.0;
@@ -98,7 +101,7 @@ function g_from_RG_eq(mu, bcoef::Vector{Float64}; Lambda = MSbar_float().Lambda,
   return gbar
 end
 
-function g_from_RG_eq(mu, bcoef::Vector{uwreal};Lambda = MSbar.Lambda,nl=5,g0=1.0, c=0.5,verbose=false)
+function g_from_RG_eq(mu, bcoef::Vector{uwreal};Lambda = MSbar_float().Lambda,nl=5,g0=1.0, c=0.5,verbose=false)
   if !(Lambda isa uwreal)
     @warn "Lambda is not an uwreal, are you sure you passing the correct arguments?"
   end
@@ -147,10 +150,10 @@ See `g_from_RG_eq` for documentation.
     alpha_4l(10000,bcoef,nl=4)
     ```
 """
-alpha(mu,bcoef;Lambda=MSbar.Lambda, nl=5, g0=1.0,c=0.5, verbose=false) = 
+alpha(mu,bcoef;Lambda= MSbar_float().Lambda, nl=5, g0=1.0,c=0.5, verbose=false) =
   g_from_RG_eq(mu,bcoef,Lambda =Lambda,nl=nl, g0=g0, c=c, verbose=verbose)^2/(4*pi)
 
-function alpha(mu::AbstractArray,bcoef;Lambda=MSbar.Lambda, nl=5,g0=1.0,c=0.5,verbose=false)
+function alpha(mu::AbstractArray,bcoef;Lambda=MSbar_float().Lambda, nl=5,g0=1.0,c=0.5,verbose=false)
   return [g_from_RG_eq(x,bcoef,Lambda =Lambda,nl=nl,g0=g0,c=c,verbose=verbose) for x in mu]
 end
 

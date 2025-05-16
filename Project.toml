@@ -1,7 +1,7 @@
 name = "RG_running"
 uuid = "65f14339-5879-41a7-ba17-e8e60657359f"
 authors = ["Antonino D'Anna <anda982008@gmail.com>"]
-version = "0.1.1"
+version = "1.0.0"
 
 [deps]
 ADerrors = "5e92007d-7bf1-471c-8ceb-4591b8b567a9"
