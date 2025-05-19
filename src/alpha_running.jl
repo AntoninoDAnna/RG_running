@@ -72,7 +72,7 @@ function g_from_RG_eq(mu, bcoef::Vector{Float64}; Lambda = MSbar_float().Lambda,
         end
         gbar = g_from_RG_eq(mu,bcoef,Lambda=Lambda,nl=nl,g0 = c*g0, c = 0.5*c)
       else
-        error(e)
+        rethrow(e)
       end
     end
   else
@@ -90,11 +90,8 @@ function g_from_RG_eq(mu, bcoef::Vector{Float64}; Lambda = MSbar_float().Lambda,
           """
         end
         gbar = g_from_RG_eq(mu,bcoef,Lambda = Lambda,nl=nl,g0 = c*g0, c = 0.5*c)
-      elseif e isa DomainError
-        throw(e)
       else
-        @error e
-        gbar = g_from_RG_eq(mu,bcoef,Lambda = Lambda,nl=nl,g0 = c*g0, c = 0.5*c)
+        rethrow(e)
       end
     end
   end
@@ -129,7 +126,7 @@ function g_from_RG_eq(mu, bcoef::Vector{uwreal};Lambda = MSbar_float().Lambda,nl
       end
       gbar = g_from_RG_eq(mu,bcoef,nl=nl,g0 = c*g0, c = 1.5*c)
     else
-      error(e)  
+      rethrow(e)
     end
   end
   return gbar
