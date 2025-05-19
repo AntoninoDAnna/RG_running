@@ -124,7 +124,7 @@ function g_from_RG_eq(mu, bcoef::Vector{uwreal};Lambda = MSbar_float().Lambda,nl
         and initial value changed to $(c*g0)
         """
       end
-      gbar = g_from_RG_eq(mu,bcoef,nl=nl,g0 = c*g0, c = 1.5*c)
+      gbar = g_from_RG_eq(mu,bcoef,nl=nl,g0 = c*g0, c = 0.5*c)
     else
       rethrow(e)
     end
