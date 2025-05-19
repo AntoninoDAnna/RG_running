@@ -8,31 +8,93 @@ If so it retrieve the cached results and return `phi`, otherwise it looks for th
   
 WARNING: `phi` always return a Float64, and `bcoef` must not be an uwreal. g must be positive otherwise an `ArgumentError` is thrown
 """
-function phi(g,bcoef::Vector)
-  key = bcoef[end]
-  if !(key in keys(__integral_phi__))
-    __integral_phi__[key] = Dict{Float64,uwreal}(0.0=>0.0) ## make sure that there is at least one entry
-  end
-  if g<0
-    throw(ArgumentError("Negative g in phi_y"))
-  end
-  gsqr= g^2
-  #y = x^2
-  cached_int = __integral_phi__[key]
-  aux1(y,p) = sum([y^(i-1)*p[i] for i = eachindex(p)])  ## beta = x^3 * aux1
-  aux2(y,p) = sum([y^(i-3)*p[i] for i = 3:lastindex(p)])
-  integrand(y,p) =((p[1]-p[2]*y)*aux2(y,p) - p[2]^2)/(p[1]^2*aux1(y,p))
+function phi(g,bcoef::Vector{uwreal})
+    @warn raw"""
+    phi(g,bcoef::Vector{uwreal}) is still under development and is not fully supported. It might give wrong results or even throw and error.
+    Utilize with caution
+    """
+    key = bcoef[end].mean
+    if !(key in keys(__integral_phi__))
+        __integral_phi__[key] = Dict{Float64,Any}(0.0=>0.0) ## make sure that there is at least one entry
+    end
+    if g<0
+        throw(ArgumentError("Negative g in phi_y"))
+    end
+    gsqr= g^2
+    #y = x^2
+    cached_int = __integral_phi__[key]
+    aux1(y,p) = sum([y^(i-1)*p[i] for i = eachindex(p)])  ## beta = x^3 * aux1
+    aux2(y,p) = sum([y^(i-3)*p[i] for i = 3:lastindex(p)])
+    integrand(y,p) =((p[1]-p[2]*y)*aux2(y,p) - p[2]^2)/(p[1]^2*aux1(y,p))
 
-  gsqr_used = [k for (k,_) in cached_int]
-  if !(gsqr in gsqr_used)
-    aux = findall(x->x<gsqr,gsqr_used)
-    lbound = maximum(gsqr_used[aux]) ## since gsqr is >0, worst case scenario is that lbound is 0.0
-    cached_int[gsqr] = (cached_int[lbound] + int_error(integrand,lbound,gsqr ,uwreal.(bcoef)))
-  end
-  N = (bcoef[1] * gsqr)^(bcoef[2]/(2*bcoef[1]^2)) * exp(1 / (2*bcoef[1]*gsqr));
+    gsqr_used = [k for (k,_) in cached_int]
+    if !(gsqr in gsqr_used)
+        aux = findall(x->x<gsqr,gsqr_used)
+        lbound = maximum(gsqr_used[aux]) ## since gsqr is >0, worst case scenario is that lbound is 0.0
+        cached_int[gsqr] = cached_int[lbound] + int_error(integrand,lbound,gsqr, bcoef)
+    end
+    N = (bcoef[1] * gsqr)^(bcoef[2]/(2*bcoef[1]^2)) * exp(1 / (2*bcoef[1]*gsqr));
 
-  return N*exp(value(0.5* cached_int[gsqr]))
+    return N*exp(value(0.5* cached_int[gsqr]))
 end
+
+function phi(g,bcoef::Vector{Float64})
+    key = bcoef[end]
+    if !(key in keys(__integral_phi__))
+        __integral_phi__[key] = Dict{Float64,Any}(0.0=>0.0) ## make sure that there is at least one entry
+    end
+    if ForwardDiff.value(g)<0
+        throw(ArgumentError("Negative g in phi_y"))
+    end
+    g2= g^2
+    _g2 = ForwardDiff.value(g2);
+    #y = x^2
+    cached_int = __integral_phi__[key]
+    aux1(y) = sum([y^(i-1)*bcoef[i] for i = eachindex(bcoef)])  ## beta = x^3 * aux1
+    aux2(y) = sum([y^(i-3)*bcoef[i] for i = 3:lastindex(bcoef)])
+    integrand(y) =((bcoef[1]-bcoef[2]*y)*aux2(y) - bcoef[2]^2)/(bcoef[1]^2*aux1(y))
+
+    g2_used = [k for (k,_) in cached_int]
+    if !(_g2 in g2_used)
+        aux = findall(x->x<_g2,g2_used)
+        lbound = maximum(g2_used[aux]) ## since gsqr is >0, worst case scenario is that lbound is 0.0
+        cached_int[_g2] = cached_int[lbound] + QuadGK.quadgk(integrand,lbound,g2)[1]
+    end
+    N = (bcoef[1] * g2)^(bcoef[2]/(2*bcoef[1]^2)) * exp(1 / (2*bcoef[1]*g2));
+
+    return N*exp(0.5* cached_int[_g2])
+end
+
+#=
+function phi(g::T,bcoef::Vector{Float64}) where T<:ForwardDiff.Dual;
+
+    key = bcoef[end]
+    if !(key in keys(__integral_phi__))
+        __integral_phi__[key] = Dict{Float64,Any}(0.0=>0.0) ## make sure that there is at least one entry
+    end
+    if ForwardDiff.value(g)<0
+        throw(ArgumentError("Negative g in phi_y"))
+    end
+    gsqr= g^2
+    #y = x^2
+    cached_int = __integral_phi__[key]
+    #cached_par = __partials_phi__[key]
+    aux1(y) = sum([y^(i-1)*bcoef[i] for i = eachindex(bcoef)])  ## beta = x^3 * aux1
+    aux2(y) = sum([y^(i-3)*bcoef[i] for i = 3:lastindex(bcoef)])
+    integrand(y) =((bcoef[1]-bcoef[2]*y)*aux2(y) - bcoef[2]^2)/(bcoef[1]^2*aux1(y))
+
+    gsqr_used = [k for (k,_) in cached_int]
+    if !(ForwardDiff.value(gsqr) in gsqr_used)
+        aux = findall(x->x<ForwardDiff.value(gsqr),gsqr_used)
+        lbound = maximum(gsqr_used[aux]) ## since gsqr is >0, worst case scenario is that lbound is 0.0
+        I,_= QuadGK.quadgj(integrand,lbound,gsqr)
+        cached_int[gsqr] = cached_int[lbound] +
+    end
+    N = (bcoef[1] * gsqr)^(bcoef[2]/(2*bcoef[1]^2)) * exp(1 / (2*bcoef[1]*gsqr));
+
+    return N*exp(0.5* cached_int[gsqr])
+end
+=#
 
 @doc raw"""
     g_from_RG_eq(mu, bcoef::Vector{Float64};Lambda = MSbar_float().Lambda, nl=5,g0=1.0, c=0.5,verbose=false)
