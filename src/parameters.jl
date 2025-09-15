@@ -77,6 +77,6 @@ let
   end
 end
 
-msbar_uwreal() = HyperPar(F2_msbar(),F3_msbar(),Lambda_msbar())
+MSbar_uwreal() = HyperPar(F2_msbar(),F3_msbar(),Lambda_msbar())
 
 MSbar_float() = HyperPar(1.7505,0.5226,341.0)
